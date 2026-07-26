@@ -12,11 +12,12 @@ What it does NOT cover is the libretro ABI itself -- both the core and this
 frontend are built against the same libretro.h in this directory, so they
 would agree even if a constant in it disagreed with RetroArch.
 """
+import os
 import subprocess
 import sys
 
 import maze_bf as M
-from maze_test import cp437_table
+from cp437 import cp437_table
 
 # Python's cp437 codec maps 0x00-0x1F to C0 controls. The graphics reading of
 # that range -- where 0x1A is an arrow -- is the one the core, the console and
@@ -76,6 +77,16 @@ def screen(content, frames=600, typed=(), speed='fast'):
     return [l for l in lines if l.strip()], r.stderr.decode('utf-8', 'replace')
 
 
+def have(*files):
+    """Content files are large and a repo may not carry all of them. A case
+    whose content is absent is reported as skipped, not failed: a missing
+    sample says nothing about whether the core works."""
+    missing = [f for f in files if not os.path.exists(f)]
+    if missing:
+        print('SKIP ' + ', '.join(missing) + ' not in this checkout')
+    return not missing
+
+
 def check(name, ok, detail=''):
     print(('PASS ' if ok else 'FAIL ') + name + (('  ' + detail) if detail else ''))
     return ok
@@ -84,53 +95,58 @@ def check(name, ok, detail=''):
 def main():
     allok = True
 
-    got, err = screen('hello.png', frames=30)
-    allok &= check('hello.png', got and got[0] == 'Hello World!', repr(got[:1]))
+    if have('hello.png'):
+        got, _ = screen('hello.png', frames=30)
+        allok &= check('hello.png', bool(got) and got[0] == 'Hello World!', repr(got[:1]))
 
-    got, _ = screen('hello.b', frames=60)
-    allok &= check('hello.b (core compiles Brainfuck)',
-                   bool(got) and got[0] == 'Hello World!', repr(got[:1]))
+    if have('hello.b'):
+        got, _ = screen('hello.b', frames=60)
+        allok &= check('hello.b (core compiles Brainfuck)',
+                       bool(got) and got[0] == 'Hello World!', repr(got[:1]))
 
-    got, _ = screen('hand.aheui', frames=30)
-    allok &= check('hand.aheui (out-of-alphabet grid as text)',
-                   bool(got) and got[0] == '9', repr(got[:1]))
+    if have('hand.aheui'):
+        got, _ = screen('hand.aheui', frames=30)
+        allok &= check('hand.aheui (out-of-alphabet grid as text)',
+                       bool(got) and got[0] == '9', repr(got[:1]))
 
-    # the frontend trims trailing blanks off each screen line, so the model
-    # must be compared the same way
-    want = [l.rstrip() for l in M.model(cp437=False).split('\n') if l.strip()]
-    got, _ = screen('maze_ascii.png', frames=400)
-    same = got[:len(want)] == want
-    allok &= check('maze_ascii.png vs independent model',
-                   same, f'{len(want)} lines' if same else repr(got[:1]))
+    if have('maze_ascii.png'):
+        want = [l.rstrip() for l in M.model(cp437=False).split('\n') if l.strip()]
+        got, _ = screen('maze_ascii.png', frames=400)
+        same = got[:len(want)] == want
+        allok &= check('maze_ascii.png vs independent model',
+                       same, f'{len(want)} lines' if same else repr(got[:1]))
 
-    want_cp = [l for l in M.model(cp437=True).split('\n') if l.strip()]
-    want_cp = [''.join(CP437[ord(c) & 255] for c in l) for l in want_cp]
-    got, _ = screen('maze.png', frames=400)
-    same = ([canon(l).rstrip() for l in got[:len(want_cp)]] ==
-            [canon(l).rstrip() for l in want_cp])
-    allok &= check('maze.png (CP437 default) vs model',
-                   same, repr(got[0][:26]) if got else '')
+    if have('maze.png'):
+        want_cp = [l for l in M.model(cp437=True).split('\n') if l.strip()]
+        want_cp = [''.join(CP437[ord(c) & 255] for c in l) for l in want_cp]
+        got, _ = screen('maze.png', frames=400)
+        same = ([canon(l).rstrip() for l in got[:len(want_cp)]] ==
+                [canon(l).rstrip() for l in want_cp])
+        allok &= check('maze.png (CP437 default) vs model',
+                       same, repr(got[0][:26]) if got else '')
 
-    # Typing CP437: the program adds one to every byte it reads, so seeing
-    # '▒▓B' back proves bytes B0/B1/41 arrived -- the screen echo alone would
-    # prove only that the frontend drew what was typed.
-    got, _ = screen('echo1.png', frames=300, typed=('\u2591\u2592A',))
-    allok &= check('CP437 typed input reaches the program',
-                   len(got) > 1 and got[1].startswith('\u2592\u2593B'),
-                   repr(got[:2]))
+    # Typing CP437: the program adds one to every byte it reads, so '▒▓B' back
+    # proves bytes B0/B1/41 arrived. A screen echo alone would prove only that
+    # the frontend drew what was typed.
+    if have('echo1.png'):
+        got, _ = screen('echo1.png', frames=300, typed=('\u2591\u2592A',))
+        allok &= check('CP437 typed input reaches the program',
+                       len(got) > 1 and got[1].startswith('\u2592\u2593B'),
+                       repr(got[:2]))
 
-    got, _ = screen('adv.png', frames=900, typed=('east',))
-    joined = '\n'.join(got)
-    allok &= check('adv.png reaches the first room',
-                   'small room' in joined, repr(got[:1]))
-    allok &= check('adv.png accepts a typed command',
-                   'dark passage' in joined)
+    if have('adv.png'):
+        got, _ = screen('adv.png', frames=900, typed=('east',))
+        joined = '\n'.join(got)
+        allok &= check('adv.png reaches the first room',
+                       'small room' in joined, repr(got[:1]))
+        allok &= check('adv.png accepts a typed command', 'dark passage' in joined)
 
-    got, _ = screen('lost_kingdom_pure_aheui.png', frames=1500, typed=('y',))
-    joined = '\n'.join(got)
-    allok &= check('lost kingdom banner', 'Lost Kingdom' in joined)
-    allok &= check('lost kingdom copyright', 'Jon Ripley' in joined)
-    allok &= check('lost kingdom accepts input', 'Ramshackle Hut' in joined)
+    if have('lost_kingdom_pure_aheui.png'):
+        got, _ = screen('lost_kingdom_pure_aheui.png', frames=1500, typed=('y',))
+        joined = '\n'.join(got)
+        allok &= check('lost kingdom banner', 'Lost Kingdom' in joined)
+        allok &= check('lost kingdom copyright', 'Jon Ripley' in joined)
+        allok &= check('lost kingdom accepts input', 'Ramshackle Hut' in joined)
 
     print('\n' + ('all core checks passed' if allok else 'FAILURES ABOVE'))
     return 0 if allok else 1

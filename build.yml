@@ -1,16 +1,16 @@
 name: build
 
-# Builds the core for every platform, so no toolchain is needed locally. Push
-# this repo to GitHub, open the Actions tab, and download the artifacts:
+# Builds the core for every platform, so no toolchain is needed locally.
+# Download the artifacts from the Actions tab:
 #
 #   aheui_libretro.dll      Windows   -> RetroArch cores directory
 #   aheui_libretro.so       Linux     -> same
 #   aheui_libretro.dylib    macOS     -> same
-#   aheui_libretro_wasm     WebAssembly, for the RetroArch web player
 #
-# The Linux leg also runs the test suite. The other legs only build, because
-# the suite needs a frontend that dlopen()s the core and that part is Unix
-# specific.
+# IMPORTANT: these sources must sit at the REPOSITORY ROOT, next to the
+# .github directory -- not inside a subfolder. Every job prints the tree it
+# can see before building, so if a path is wrong the log says so directly
+# instead of only reporting that make found no makefile.
 
 on:
   push:
@@ -22,13 +22,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Show what the runner checked out
+        run: |
+          echo "--- working directory: $PWD"
+          ls -la
+          echo "--- required files ---"
+          missing=0
+          for f in Makefile aheui_libretro.c libretro.h aheui_tables.h font8x8.h; do
+            if [ -f "$f" ]; then echo "  found   $f"
+            else echo "  MISSING $f"; missing=1; fi
+          done
+          if [ "$missing" = "1" ]; then
+            echo
+            echo "Sources are not at the repository root. Anything nested looks like:"
+            find . -name 'aheui_libretro.c' -not -path './.git/*' || true
+            exit 1
+          fi
       - name: Build
         run: make platform=unix
       - name: Check exported entry points
-        run: ./check_abi.sh ./aheui_libretro.so
+        run: sh check_abi.sh ./aheui_libretro.so
       - name: Test
         run: |
-          sudo apt-get update && sudo apt-get install -y fonts-liberation
           make test_frontend
           python3 test_core.py
       - uses: actions/upload-artifact@v4
@@ -49,12 +64,17 @@ jobs:
         with:
           msystem: MINGW64
           install: mingw-w64-x86_64-gcc make
+      - name: Show what the runner checked out
+        run: |
+          echo "--- working directory: $PWD"
+          ls -la
+          test -f Makefile || { echo "no Makefile here"; find . -name 'aheui_libretro.c' -not -path './.git/*'; exit 1; }
       - name: Build
         run: make platform=win CC=gcc
-      - name: Confirm it is a DLL with the entry points
+      - name: Confirm it is a DLL carrying the entry points
         run: |
           file aheui_libretro.dll
-          nm -g aheui_libretro.dll | grep -c retro_ || true
+          echo "retro_ symbols: $(nm -g aheui_libretro.dll 2>/dev/null | grep -c retro_ || echo unknown)"
       - uses: actions/upload-artifact@v4
         with:
           name: aheui_libretro_windows
@@ -66,6 +86,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Show what the runner checked out
+        run: |
+          echo "--- working directory: $PWD"
+          ls -la
+          test -f Makefile || { echo "no Makefile here"; find . -name 'aheui_libretro.c' -not -path './.git/*'; exit 1; }
       - name: Build
         run: make platform=osx
       - uses: actions/upload-artifact@v4
@@ -75,20 +100,21 @@ jobs:
             aheui_libretro.dylib
             aheui_libretro.info
 
+  # The web player core. Left non-blocking on purpose: I could not build or run
+  # emscripten to check this, and it must not stop the three artifacts above
+  # from being produced.
   wasm:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: mymindstorm/setup-emsdk@v14
-      - name: Build for the RetroArch web player
-        # Web player cores are side modules: the frontend is the page, the
-        # core is loaded into it.
+      - name: Build a side module
         run: |
-          emcc -O2 -std=c99 -Wall -Wextra \
-            -s SIDE_MODULE=1 -s EXPORT_ALL=1 \
-            -o aheui_libretro_emscripten.bc aheui_libretro.c
-          ls -la aheui_libretro_emscripten.bc
+          emcc -O2 -std=c99 -Wall -Wextra -s SIDE_MODULE=1 \
+            -o aheui_libretro_emscripten.wasm aheui_libretro.c
+          ls -la aheui_libretro_emscripten.wasm
       - uses: actions/upload-artifact@v4
         with:
           name: aheui_libretro_wasm
-          path: aheui_libretro_emscripten.bc
+          path: aheui_libretro_emscripten.wasm
