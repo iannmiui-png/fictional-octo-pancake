@@ -1,0 +1,94 @@
+name: build
+
+# Builds the core for every platform, so no toolchain is needed locally. Push
+# this repo to GitHub, open the Actions tab, and download the artifacts:
+#
+#   aheui_libretro.dll      Windows   -> RetroArch cores directory
+#   aheui_libretro.so       Linux     -> same
+#   aheui_libretro.dylib    macOS     -> same
+#   aheui_libretro_wasm     WebAssembly, for the RetroArch web player
+#
+# The Linux leg also runs the test suite. The other legs only build, because
+# the suite needs a frontend that dlopen()s the core and that part is Unix
+# specific.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: make platform=unix
+      - name: Check exported entry points
+        run: ./check_abi.sh ./aheui_libretro.so
+      - name: Test
+        run: |
+          sudo apt-get update && sudo apt-get install -y fonts-liberation
+          make test_frontend
+          python3 test_core.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aheui_libretro_linux
+          path: |
+            aheui_libretro.so
+            aheui_libretro.info
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc make
+      - name: Build
+        run: make platform=win CC=gcc
+      - name: Confirm it is a DLL with the entry points
+        run: |
+          file aheui_libretro.dll
+          nm -g aheui_libretro.dll | grep -c retro_ || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aheui_libretro_windows
+          path: |
+            aheui_libretro.dll
+            aheui_libretro.info
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: make platform=osx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aheui_libretro_macos
+          path: |
+            aheui_libretro.dylib
+            aheui_libretro.info
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+      - name: Build for the RetroArch web player
+        # Web player cores are side modules: the frontend is the page, the
+        # core is loaded into it.
+        run: |
+          emcc -O2 -std=c99 -Wall -Wextra \
+            -s SIDE_MODULE=1 -s EXPORT_ALL=1 \
+            -o aheui_libretro_emscripten.bc aheui_libretro.c
+          ls -la aheui_libretro_emscripten.bc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aheui_libretro_wasm
+          path: aheui_libretro_emscripten.bc

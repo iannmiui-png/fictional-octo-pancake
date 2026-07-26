@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>잃어버린 왕국 아희 에디션 — 김철수닷컴</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#faf9f6; color:#282828; font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; font-size:14px; }
+#hdr { background:#d7d7cd; border-bottom:1px solid #b9b9aa; padding:10px 14px; }
+#hdr b { color:#0f0f6e; font-size:20px; }
+#wrap { display:flex; align-items:flex-start; }
+#side { width:170px; background:#ebebe4; border-right:1px solid #b9b9aa; padding:12px 8px; min-height:70vh; }
+#side h4 { color:#0f0f6e; font-size:13px; margin-top:10px; }
+#side a { display:block; color:#0000b4; font-size:12px; margin:3px 0 0 10px; text-decoration:none; cursor:default; }
+#main { flex:1; padding:16px 22px; max-width:900px; }
+h1 { font-family:'Batang',serif; font-size:26px; margin-bottom:6px; }
+.sub { font-family:monospace; font-size:12px; margin-bottom:10px; }
+hr { border:0; border-top:1px solid #a5a596; margin:10px 0 14px; }
+.code { background:#dedeD8; font-family:monospace; font-size:12px; padding:8px 10px; white-space:pre; margin-bottom:14px; }
+p { line-height:1.6; margin-bottom:12px; }
+#term { background:#111; color:#d8d8d8; font-family:'D2Coding','Consolas',monospace; font-size:13px;
+        padding:10px; height:380px; overflow-y:auto; white-space:pre-wrap; word-wrap:break-word;
+        border:1px solid #555; }
+#term .echo { color:#6fb3ff; }
+#row { display:flex; margin-top:6px; }
+#row span { font-family:monospace; padding:5px 6px 0 0; color:#0f0f6e; font-weight:bold; }
+#cmd { flex:1; font-family:monospace; font-size:13px; padding:5px 7px; border:1px solid #a5a596; background:#fff; outline:none; }
+#cmd:focus { border-color:#0f0f6e; }
+#stop { font-size:11px; padding:0 6px; border:1px solid #b9b9aa; background:#dedeD8; cursor:pointer; }
+#stop:disabled { color:#aaa; cursor:default; }
+#bar { display:flex; justify-content:space-between; font-size:11px; color:#555;
+       background:#ebebe4; border:1px solid #b9b9aa; border-top:0; padding:4px 8px; }
+#drop { border:2px dashed #a5a596; padding:14px; text-align:center; color:#666; font-size:12px; margin-bottom:12px; background:#f2f2ec; }
+#drop.on { border-color:#0f0f6e; background:#e8e8f5; }
+#opts { font-size:12px; color:#555; margin-bottom:10px; }
+#opts span { color:#888; }
+#made { display:none; align-items:center; gap:10px; margin-bottom:12px; padding:6px 10px;
+        background:#ebebe4; border:1px solid #b9b9aa; font-size:12px; }
+#made.on { display:flex; }
+#dl { color:#0000b4; font-weight:bold; text-decoration:underline; }
+#madeinfo { color:#555; flex:1; font-family:monospace; }
+#thumb { height:44px; image-rendering:pixelated; border:1px solid #a5a596; background:#fff; }
+footer { border-top:1px solid #b9b9aa; margin-top:20px; padding:8px 14px; font-size:12px; color:#666; }
+</style>
+</head>
+<body>
+
+<div id="hdr"><b>김철수닷컴</b></div>
+
+<div id="wrap">
+  <div id="side">
+    <h4>아희</h4><a>기사</a><a>문법</a><a>역사</a>
+    <h4>인터랙티브 픽션</h4><a>게임</a><a>지금 플레이</a>
+    <h4>브레인퍽</h4><a>기사</a><a>도구</a>
+    <h4>사이트맵</h4>
+  </div>
+
+  <div id="main">
+    <h1>잃어버린 왕국 아희 에디션</h1>
+    <div class="sub">v0.11 &nbsp; *** 세계 최초 아희 텍스트 어드벤처 *** &nbsp; 브라우저 콘솔</div>
+    <hr>
+    <div class="code">잃어버린 왕국
+(C) Jon Ripley 2004, 2005
+Brainfuck Edition v0.11 &mdash; 아희로 기계 번역됨</div>
+
+    <p>이 페이지의 콘솔은 PNG 픽셀에 저장된 <b>순수 한글 아희</b> 프로그램을 직접 실행합니다.
+       브레인퍽 소스(<code>.b</code>, <code>.bf</code>)나 아희 격자(<code>.aheui</code>)를 놓으면
+       이 페이지가 직접 아희로 번역해 PNG로 굽고, 그 PNG를 다시 읽어서 실행합니다.
+       <b>실행되는 것은 언제나 PNG입니다.</b></p>
+
+    <div id="drop">
+      <code>.b</code> &middot; <code>.bf</code> &middot; <code>.aheui</code> &middot; <code>.png</code>
+      파일을 여기에 끌어다 놓거나
+      <input type="file" id="file" accept=".png,.b,.bf,.aheui,.txt,image/png,text/plain">
+    </div>
+
+    <div id="opts"><label><input type="checkbox" id="cp437" checked> CP437 문자표로 표시
+      <span>(도스 박스 문자 · 화살표 · 음영)</span></label></div>
+
+    <div id="made"><a id="dl" download>PNG 내려받기</a><span id="madeinfo"></span><img id="thumb" alt=""></div>
+
+    <div id="term"></div>
+    <div id="bar">
+      <span id="stat">대기 중</span>
+      <span><button id="stop" disabled>중지</button> <span id="steps">걸음: 0</span></span>
+    </div>
+    <div id="row"><span>&gt;</span><input id="cmd" autocomplete="off" disabled placeholder="로딩 중…"></div>
+  </div>
+</div>
+
+<footer>© 김철수닷컴 2004-2025 &nbsp;|&nbsp; 원작 저작권은 Jon Ripley에게 있습니다.</footer>
+
+<script>
+// Alphabet used by the BASE-40 residue encoding: newline, space, then the
+// 36 Hangul syllables the grid compiler can emit. Index = byte % 40.
+const ALPHABET = "\n \uB098\uB2E4\uB354\uB450\uB530\uB5A0\uB8E8\uBA38\uBB34\uBB4F\uBC1B\uBC1C\uBC1F\uBC20\uBC25\uBC93\uBC9D\uBD80\uBD97\uBD9B\uBE60\uBFCC\uC03C\uC218\uC219\uC21C\uC2F9\uC2FC\uC464\uC544\uC5B4\uC624\uC6B0\uCD08\uCD94\uD76C";
+const TERM_DIGIT = 39, BASE = 40, HBASE = 0xAC00;
+const STROKES = [0,2,4,4,2,5,5,3,5,7,9,9,7,9,9,8,4,4,6,2,4,0,3,4,3,4,4,0];
+
+// Program output is bytes. Latin-1 is the browser's default reading of them,
+// which turns DOS box drawing into accented vowels; this is the other reading.
+// Tab, newline and carriage return keep their control meaning either way.
+const CP437 = "\u0020\u263A\u263B\u2665\u2666\u2663\u2660\u2022\u25D8\u0009\u000A\u2642\u2640\u000D\u266B\u263C\u25BA\u25C4\u2195\u203C\u00B6\u00A7\u25AC\u21A8\u2191\u2193\u2192\u2190\u221F\u2194\u25B2\u25BC\u0020\u0021\u0022\u0023\u0024\u0025\u0026\u0027\u0028\u0029\u002A\u002B\u002C\u002D\u002E\u002F\u0030\u0031\u0032\u0033\u0034\u0035\u0036\u0037\u0038\u0039\u003A\u003B\u003C\u003D\u003E\u003F\u0040\u0041\u0042\u0043\u0044\u0045\u0046\u0047\u0048\u0049\u004A\u004B\u004C\u004D\u004E\u004F\u0050\u0051\u0052\u0053\u0054\u0055\u0056\u0057\u0058\u0059\u005A\u005B\u005C\u005D\u005E\u005F\u0060\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u006A\u006B\u006C\u006D\u006E\u006F\u0070\u0071\u0072\u0073\u0074\u0075\u0076\u0077\u0078\u0079\u007A\u007B\u007C\u007D\u007E\u2302\u00C7\u00FC\u00E9\u00E2\u00E4\u00E0\u00E5\u00E7\u00EA\u00EB\u00E8\u00EF\u00EE\u00EC\u00C4\u00C5\u00C9\u00E6\u00C6\u00F4\u00F6\u00F2\u00FB\u00F9\u00FF\u00D6\u00DC\u00A2\u00A3\u00A5\u20A7\u0192\u00E1\u00ED\u00F3\u00FA\u00F1\u00D1\u00AA\u00BA\u00BF\u2310\u00AC\u00BD\u00BC\u00A1\u00AB\u00BB\u2591\u2592\u2593\u2502\u2524\u2561\u2562\u2556\u2555\u2563\u2551\u2557\u255D\u255C\u255B\u2510\u2514\u2534\u252C\u251C\u2500\u253C\u255E\u255F\u255A\u2554\u2569\u2566\u2560\u2550\u256C\u2567\u2568\u2564\u2565\u2559\u2558\u2552\u2553\u256B\u256A\u2518\u250C\u2588\u2584\u258C\u2590\u2580\u03B1\u00DF\u0393\u03C0\u03A3\u03C3\u00B5\u03C4\u03A6\u0398\u03A9\u03B4\u221E\u03C6\u03B5\u2229\u2261\u00B1\u2265\u2264\u2320\u2321\u00F7\u2248\u00B0\u2219\u00B7\u221A\u207F\u00B2\u25A0\u00A0";
+
+// The leaf blocks and scaffold cells, so this page can compile Brainfuck on
+// its own. Do not hand-edit: `python3 sync_console.py aheui_console.html`
+// rewrites this region from bf_to_aheui.py, which is the only definition.
+// >>> generated by sync_console.py from bf_to_aheui.py
+const DUP_SKIP2 = "\uC03C";
+const NOOP_RIGHT = "\uC544";
+const NOOP_LEFT = "\uC5B4";
+const NOOP_DOWN = "\uC6B0";
+const NOOP_UP = "\uC624";
+const CHECK_DOWN = "\uCD94";
+const CHECK_UP = "\uCD08";
+const BLOCK_BEGIN = "\uBD80", BLOCK_HALT = "\uD76C";
+const BLOCKS = {
+  '+': ["\uBC1C\uBC1C\uB098\uB2E4\uBD97", "\uB8E8\uB5A0\uB5A0\uBC93\uBC93"],
+  '-': ["\uBC1F\uBC20\uBC25\uB530\uB530\uBC1B\uB450", "\uB8E8\uB5A0\uB5A0\uBC93\uBC93\uBC9D\uB354"],
+  '.': ["\uBFCC", "\uBB4F"],
+  ',': ["\uBB34", "\uBD9B"],
+  '>': ["\uC2F9\uC21C", "\uC218\uBE60\uC464", "\uBD80\uC218\uBA38", "\uC6B0\uC5B4"],
+  '<': ["\uC2FC\uC219", "\uC218\uBE60\uC464", "\uBD80\uC218\uBA38", "\uC6B0\uC5B4"],
+};
+// <<< end generated
+
+const termEl = document.getElementById('term');
+const cmdEl  = document.getElementById('cmd');
+const statEl = document.getElementById('stat');
+const stepEl = document.getElementById('steps');
+const dropEl = document.getElementById('drop');
+const cp437El = document.getElementById('cp437');
+const stopEl = document.getElementById('stop');
+const madeEl = document.getElementById('made');
+const dlEl = document.getElementById('dl');
+const thumbEl = document.getElementById('thumb');
+const madeInfoEl = document.getElementById('madeinfo');
+
+// Program output is retained as raw bytes on the span that shows it, so
+// flipping the CP437 toggle can re-render output that has already scrolled by.
+const outSpans = [];
+function renderBytes(b) {
+  const cp = cp437El && cp437El.checked;
+  let s = '';
+  for (const n of b) s += cp ? CP437[n & 255] : String.fromCharCode(n);
+  return s;
+}
+function sayBytes(b) {
+  const s = document.createElement('span');
+  s.__bytes = b;
+  s.textContent = renderBytes(b);
+  termEl.appendChild(s);
+  outSpans.push(s);
+  termEl.scrollTop = termEl.scrollHeight;
+}
+if (cp437El) cp437El.addEventListener('change', () => {
+  for (const s of outSpans) s.textContent = renderBytes(s.__bytes);
+});
+
+function say(t, cls) {
+  const s = document.createElement('span');
+  if (cls) s.className = cls;
+  s.textContent = t;
+  termEl.appendChild(s);
+  termEl.scrollTop = termEl.scrollHeight;
+}
+const status = t => statEl.textContent = t;
+const yieldUI = () => new Promise(r => setTimeout(r, 0));
+
+// ── Text input arrives from editors, not from a pipe. Windows line endings
+// would otherwise reach the grid as a stray \r, which is not an Aheui symbol
+// and not a blank either, and UTF-16 would decode to nothing recognisable.
+function decodeText(bytes) {
+  let enc = 'utf-8';
+  if (bytes.length > 1 && bytes[0] === 0xFF && bytes[1] === 0xFE) enc = 'utf-16le';
+  else if (bytes.length > 1 && bytes[0] === 0xFE && bytes[1] === 0xFF) enc = 'utf-16be';
+  let t = new TextDecoder(enc).decode(bytes);
+  if (t.charCodeAt(0) === 0xFEFF) t = t.slice(1);
+  return t.indexOf('\r') < 0 ? t : t.replace(/\r\n?/g, '\n');
+}
+
+// ── A grid straight from text. The PNG format stores a residue mod 40, so it
+// can only hold the 38 symbols the BF compiler emits; an Aheui program from
+// anywhere else will use others. The VM needs only the cho/jung/jong
+// decomposition, so such a program can still run -- it just cannot be baked.
+// Index 0 is the blank, so a read past a row's end is a no-op.
+function gridFromText(text) {
+  const n = text.length;
+  // A code-point lookup table, not a Map: the fill pass runs once per cell and
+  // Lost Kingdom is 22 million cells. Index 0 is the blank, so a read past the
+  // end of a row is a no-op.
+  const lut = new Int32Array(0x10000).fill(-1);
+  const syms = [32];
+  lut[32] = 0;
+  let rows = 0, total = 0, W = 0, cur = 0;
+  for (let i = 0; i < n; i++) {
+    const c = text.charCodeAt(i);
+    if (c === 10) { if (cur > W) W = cur; cur = 0; rows++; continue; }
+    cur++; total++;
+    if (c < 0x10000 && lut[c] < 0) { lut[c] = syms.length; syms.push(c); }
+  }
+  if (cur) { if (cur > W) W = cur; rows++; }        // file need not end in \n
+  if (!rows) throw new Error('빈 격자입니다');
+  if (W > 65535) throw new Error('한 행이 65535자를 넘습니다');
+
+  const data = new (syms.length > 255 ? Uint16Array : Uint8Array)(total);
+  const rowStart = new Int32Array(rows), rowLen = new Uint16Array(rows);
+  let r = 0, w = 0, st = 0;
+  for (let i = 0; i < n; i++) {
+    const c = text.charCodeAt(i);
+    if (c === 10) { rowStart[r] = st; rowLen[r] = w - st; st = w; r++; continue; }
+    data[w++] = lut[c];
+  }
+  if (r < rows) { rowStart[r] = st; rowLen[r] = w - st; }
+
+  const cho = new Int8Array(syms.length).fill(-1),
+        ju = new Uint8Array(syms.length), jo = new Uint8Array(syms.length);
+  for (let i = 0; i < syms.length; i++) {
+    const o = syms[i] - HBASE;
+    if (o >= 0 && o < 19 * 21 * 28) { cho[i] = (o / 588) | 0; ju[i] = ((o % 588) / 28) | 0; jo[i] = o % 28; }
+  }
+  return { data, rowStart, rowLen, rows, W, cho, ju, jo, blank: 0, syms };
+}
+
+// ── Brainfuck → Aheui grid. Same scaffold as bf_to_aheui.py: leaf blocks are
+// straight-line rows entered and left at column 0 going down, and a loop is a
+// pair of check frames joined by two vertical bypass lanes whose columns are
+// keyed to nesting depth, so an outer lane always finds blanks while gliding
+// through inner frames.
+function setChar(row, col, ch) {
+  if (row.length <= col) row += ' '.repeat(col - row.length + 1);
+  return row.slice(0, col) + ch + row.slice(col + 1);
+}
+
+function matchBrackets(t) {
+  const m = new Int32Array(t.length), st = [];
+  for (let i = 0; i < t.length; i++) {
+    if (t[i] === '[') st.push(i);
+    else if (t[i] === ']') {
+      const j = st.pop();
+      if (j === undefined) throw new Error(`짝 없는 ] (${i + 1}번째 명령)`);
+      m[j] = i; m[i] = j;
+    }
+  }
+  if (st.length) throw new Error(`짝 없는 [ (${st[0] + 1}번째 명령)`);
+  return m;
+}
+
+function compileBF(src) {
+  const t = [...src].filter(c => '+-.,<>[]'.indexOf(c) >= 0);
+  const m = matchBrackets(t);
+  const rows = [BLOCK_BEGIN];
+  (function emit(lo, hi, depth) {
+    for (let i = lo; i < hi; i++) {
+      const c = t[i];
+      if (BLOCKS[c]) { for (const r of BLOCKS[c]) rows.push(r); continue; }
+      if (c !== '[') continue;
+      const j = m[i], SKIP = 8 + 2 * depth, BACK = SKIP + 1;
+      rows.push(DUP_SKIP2, setChar(NOOP_RIGHT, SKIP, NOOP_DOWN), CHECK_DOWN,
+                setChar(NOOP_DOWN, BACK, NOOP_LEFT));           // entry frame
+      if (j === i + 1) rows.push(NOOP_DOWN);                    // empty body
+      else emit(i + 1, j, depth + 1);
+      rows.push(DUP_SKIP2, setChar(NOOP_RIGHT, BACK, NOOP_UP), CHECK_UP,
+                setChar(NOOP_DOWN, SKIP, NOOP_LEFT));           // exit frame
+      i = j;
+    }
+  })(0, t.length, 0);
+  rows.push(BLOCK_HALT);
+  return rows;
+}
+
+// ── grid text → pixel bytes. Residue mod 40 carries the symbol; the quotient
+// is free, so it is spent on making the picture legible: blanks dark, row ends
+// bright, code in between. Residue 39 ends the data, and nothing else uses it.
+function gridToBytes(text) {
+  const idx = new Map();
+  for (let i = 0; i < ALPHABET.length; i++) idx.set(ALPHABET[i], i);
+  const out = new Uint8Array(text.length + 1);
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], k = idx.get(c);
+    if (k === undefined)
+      throw new Error('격자에 알파벳 밖의 글자: ' + JSON.stringify(c));
+    out[i] = k + BASE * (c === '\n' ? 5 : c === ' ' ? 0 : 3);
+  }
+  out[text.length] = TERM_DIGIT + BASE * 5;
+  return out;
+}
+
+// ── minimal PNG writer. 8-bit grayscale with filter 0 on every row, so each
+// pixel is exactly one stored byte and the file survives any viewer that
+// might otherwise resample or premultiply it.
+const CRC_T = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(b) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function chunk(type, data) {
+  const out = new Uint8Array(12 + data.length);
+  const dv = new DataView(out.buffer);
+  dv.setUint32(0, data.length);
+  for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  out.set(data, 8);
+  dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+  return out;
+}
+async function encodePNG(bytes, W) {
+  const H = Math.max(1, Math.ceil(bytes.length / W));
+  const raw = new Uint8Array(H * (W + 1));
+  for (let y = 0; y < H; y++)
+    raw.set(bytes.subarray(y * W, Math.min((y + 1) * W, bytes.length)), y * (W + 1) + 1);
+
+  const cs = new CompressionStream('deflate');     // zlib-wrapped, as PNG wants
+  const wr = cs.writable.getWriter(); wr.write(raw); wr.close();
+  const rd = cs.readable.getReader();
+  const parts = []; let tot = 0;
+  for (;;) { const {done, value} = await rd.read(); if (done) break; parts.push(value); tot += value.length; }
+  const z = new Uint8Array(tot); let p = 0;
+  for (const c of parts) { z.set(c, p); p += c.length; }
+
+  const ihdr = new Uint8Array(13);
+  const dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, W); dv.setUint32(4, H);
+  ihdr[8] = 8; ihdr[9] = 0;                        // depth 8, colour type 0
+  const sig = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+  const parts2 = [sig, chunk('IHDR', ihdr), chunk('IDAT', z), chunk('IEND', new Uint8Array(0))];
+  let n = 0; for (const c of parts2) n += c.length;
+  const png = new Uint8Array(n); p = 0;
+  for (const c of parts2) { png.set(c, p); p += c.length; }
+  return {png, W, H};
+}
+
+// ── PNG → raw bytes (manual; canvas would premultiply alpha and corrupt LSBs)
+async function decodePNG(bytes) {
+  let off = 8, W = 0, H = 0, ch = 4;
+  const idat = [];
+  while (off < bytes.length) {
+    const dv = new DataView(bytes.buffer, bytes.byteOffset + off, 8);
+    const len = dv.getUint32(0);
+    const type = String.fromCharCode(bytes[off+4], bytes[off+5], bytes[off+6], bytes[off+7]);
+    const data = bytes.subarray(off + 8, off + 8 + len);
+    if (type === 'IHDR') {
+      const h = new DataView(data.buffer, data.byteOffset, data.length);
+      W = h.getUint32(0); H = h.getUint32(4);
+      const ct = data[9];
+      ch = ct === 6 ? 4 : ct === 2 ? 3 : ct === 4 ? 2 : 1;
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+    off += 12 + len;
+  }
+  let n = 0; for (const c of idat) n += c.length;
+  const comp = new Uint8Array(n); let p = 0;
+  for (const c of idat) { comp.set(c, p); p += c.length; }
+
+  const ds = new DecompressionStream('deflate');
+  const wr = ds.writable.getWriter(); wr.write(comp); wr.close();
+  const rd = ds.readable.getReader();
+  const parts = []; let tot = 0;
+  for (;;) { const {done, value} = await rd.read(); if (done) break; parts.push(value); tot += value.length; }
+  const dec = new Uint8Array(tot); p = 0;
+  for (const c of parts) { dec.set(c, p); p += c.length; }
+
+  const stride = W * ch, raw = new Uint8Array(W * H * ch);
+  let s = 0;
+  for (let y = 0; y < H; y++) {
+    const f = dec[s++], o = y * stride;
+    for (let x = 0; x < stride; x++) {
+      const cur = dec[s++];
+      const a = x >= ch ? raw[o + x - ch] : 0;
+      const b = y > 0 ? raw[o - stride + x] : 0;
+      const c2 = (x >= ch && y > 0) ? raw[o - stride + x - ch] : 0;
+      let v;
+      switch (f) {
+        case 0: v = cur; break;
+        case 1: v = (cur + a) & 255; break;
+        case 2: v = (cur + b) & 255; break;
+        case 3: v = (cur + ((a + b) >> 1)) & 255; break;
+        case 4: {
+          const pp = a + b - c2, pa = Math.abs(pp-a), pb = Math.abs(pp-b), pc = Math.abs(pp-c2);
+          v = (cur + ((pa <= pb && pa <= pc) ? a : (pb <= pc) ? b : c2)) & 255; break;
+        }
+        default: v = cur;
+      }
+      raw[o + x] = v;
+    }
+  }
+  return raw;
+}
+
+// ── raw bytes → ragged grid of symbol indices
+// The stored grid is right-stripped; a cell past a row's end reads as blank,
+// which is exactly equivalent to padding it out, without the memory cost.
+function buildGrid(raw) {
+  const NL = 0, BLANK = 1;
+  let end = raw.length;
+  for (let i = 0; i < raw.length; i++) if (raw[i] % BASE === TERM_DIGIT) { end = i; break; }
+
+  let rows = 0;
+  for (let i = 0; i < end; i++) if (raw[i] % BASE === NL) rows++;
+  const rowStart = new Int32Array(rows), rowLen = new Uint16Array(rows);
+  // Uint16, not Uint8: row width is 8 + 2*nesting depth, so a Uint8 row
+  // length wraps silently at depth 124 and the VM then reads every row as
+  // blank. Hand-written BF never gets there; compiled combinator terms do.
+  const data = new Uint8Array(end - rows);
+
+  let r = 0, w = 0, st = 0, W = 0;
+  for (let i = 0; i < end; i++) {
+    const d = raw[i] % BASE;
+    if (d === NL) { rowStart[r] = st; rowLen[r] = w - st; if (w - st > W) W = w - st; st = w; r++; }
+    else data[w++] = d;
+  }
+
+  const cho = new Int8Array(ALPHABET.length).fill(-1);
+  const ju  = new Uint8Array(ALPHABET.length);
+  const jo  = new Uint8Array(ALPHABET.length);
+  for (let i = 0; i < ALPHABET.length; i++) {
+    const o = ALPHABET.charCodeAt(i) - HBASE;
+    if (o >= 0 && o < 19*21*28) { cho[i] = (o/588)|0; ju[i] = ((o%588)/28)|0; jo[i] = o%28; }
+  }
+  return { data, rowStart, rowLen, rows, W, cho, ju, jo, blank: 1 };
+}
+
+// ── skip tables: for sparse columns, the sorted list of occupied rows.
+// A run of blank cells is a no-op run (blanks cannot change direction or
+// touch storage), so a vertical glide can jump straight to the next
+// occupied row instead of paying a step per blank cell. Dense columns are
+// left untabled -- their glides are short anyway, and a table for column 0
+// alone would cost 33 MB.
+function buildSkip(g) {
+  const {rows, W, cho, data, rowStart, rowLen, blank} = g;
+  const count = new Int32Array(W);
+  for (let y = 0; y < rows; y++) {
+    const st = rowStart[y], len = rowLen[y];
+    for (let x = 0; x < W; x++)
+      if (cho[x < len ? data[st + x] : blank] >= 0) count[x]++;
+  }
+  const tab = new Array(W).fill(null);
+  const fill = new Int32Array(W);
+  for (let x = 0; x < W; x++)
+    if (count[x] && count[x] <= rows * 0.3) tab[x] = new Int32Array(count[x]);
+  for (let y = 0; y < rows; y++) {
+    const st = rowStart[y], len = rowLen[y];
+    for (let x = 0; x < W; x++) {
+      const t = tab[x];
+      if (t && cho[x < len ? data[st + x] : blank] >= 0) t[fill[x]++] = y;
+    }
+  }
+  return tab;
+}
+
+// ── VM
+class AheuiVM {
+  constructor(g, skip) {
+    this.g = g; this.skip = skip;
+    this.st = []; for (let i = 0; i < 28; i++) this.st.push([]);
+    this.cur = 0; this.x = 0; this.y = 0; this.dx = 1; this.dy = 0;
+    this.steps = 0; this.out = []; this.q = []; this.resolve = null; this.done = false;
+  }
+  cell(x, y) { const g = this.g; return x < g.rowLen[y] ? g.data[g.rowStart[y] + x] : g.blank; }
+
+  feed(line) {
+    for (const c of line) this.q.push(c.charCodeAt(0));
+    this.q.push(10);
+    if (this.resolve) { const r = this.resolve; this.resolve = null; r(); }
+  }
+  async getChar() {
+    if (this.q.length) return this.q.shift();
+    if (this.out.length) { sayBytes(this.out); this.out = []; }
+    cmdEl.disabled = false; cmdEl.placeholder = '명령어 입력…'; cmdEl.focus();
+    status('입력 대기');
+    await new Promise(r => this.resolve = r);
+    return this.q.shift();
+  }
+
+  advance() {
+    const g = this.g;
+    this.x += this.dx; this.y += this.dy;
+    if (this.y < 0) this.y = g.rows - 1; else if (this.y >= g.rows) this.y = 0;
+    if (this.x < 0) this.x = g.W - 1;   else if (this.x >= g.W) this.x = 0;
+  }
+
+  async run() {
+    const g = this.g, cho = g.cho, ju = g.ju, jo = g.jo;
+    const BATCH = 3000000;
+    while (!this.done) {
+      let left = BATCH;
+      while (left-- > 0) {
+        const s = this.cell(this.x, this.y), c = cho[s];
+        this.steps++;
+        if (c < 0) {
+          // glide over blanks
+          let n = 4, moved = false;
+          while (n-- > 0) { this.advance(); if (cho[this.cell(this.x, this.y)] >= 0) { moved = true; break; } }
+          if (moved) continue;
+          const t = (this.dx === 0 && this.dy !== 0) ? this.skip[this.x] : null;
+          if (t && Math.abs(this.dy) === 1) {
+            let lo = 0, hi = t.length - 1, res = -1;
+            if (this.dy > 0) {
+              while (lo <= hi) { const m = (lo+hi)>>1; if (t[m] > this.y) { res = t[m]; hi = m-1; } else lo = m+1; }
+              this.y = res >= 0 ? res : t[0];
+            } else {
+              while (lo <= hi) { const m = (lo+hi)>>1; if (t[m] < this.y) { res = t[m]; lo = m+1; } else hi = m-1; }
+              this.y = res >= 0 ? res : t[t.length-1];
+            }
+          } else this.advance();
+          continue;
+        }
+
+        const v = ju[s], j = jo[s];
+        if      (v === 0)  { this.dx = 1;  this.dy = 0; }
+        else if (v === 2)  { this.dx = 2;  this.dy = 0; }
+        else if (v === 4)  { this.dx = -1; this.dy = 0; }
+        else if (v === 6)  { this.dx = -2; this.dy = 0; }
+        else if (v === 8)  { this.dx = 0;  this.dy = -1; }
+        else if (v === 12) { this.dx = 0;  this.dy = -2; }
+        else if (v === 13) { this.dx = 0;  this.dy = 1; }
+        else if (v === 17) { this.dx = 0;  this.dy = 2; }
+        else if (v === 18) this.dy = -this.dy;
+        else if (v === 19) { this.dx = -this.dx; this.dy = -this.dy; }
+        else if (v === 20) this.dx = -this.dx;
+
+        let ok = true;
+        const S = this.st[this.cur];
+        switch (c) {
+          case 2: if (S.length < 2) ok = false; else { const a = S.pop(), b = S.pop(); S.push(a === 0 ? 0 : Math.trunc(b/a)); } break;
+          case 3: if (S.length < 2) ok = false; else { const a = S.pop(); S[S.length-1] += a; } break;
+          case 4: if (S.length < 2) ok = false; else { const a = S.pop(); S[S.length-1] *= a; } break;
+          case 5: if (S.length < 2) ok = false; else { const a = S.pop(), b = S.pop(); S.push(a === 0 ? 0 : ((b % a) + a) % a); } break;
+          case 6:
+            if (!S.length) ok = false;
+            else { const n = this.cur === 21 ? S.shift() : S.pop();
+                   if (j === 21) { for (const d of String(n)) this.out.push(d.charCodeAt(0)); }
+                   else if (j === 27) this.out.push(n); }
+            break;
+          case 7:
+            if (j === 27) { if (this.out.length) { sayBytes(this.out); this.out = []; } S.push(await this.getChar());
+                            cmdEl.disabled = true; cmdEl.placeholder = '실행 중…'; status('실행 중'); }
+            else if (j !== 21) S.push(STROKES[j]);
+            break;
+          case 8: if (!S.length) ok = false; else S.push(this.cur === 21 ? S[0] : S[S.length-1]); break;
+          case 9: this.cur = j; break;
+          case 10:
+            if (!S.length) ok = false;
+            else { const n = this.cur === 21 ? S.shift() : S.pop(); if (j !== 27) this.st[j].push(n); }
+            break;
+          case 12: if (S.length < 2) ok = false; else { const a = S.pop(), b = S.pop(); S.push(b >= a ? 1 : 0); } break;
+          case 14:
+            if (!S.length) ok = false;
+            else { const n = this.cur === 21 ? S.shift() : S.pop();
+                   if (n === 0) { this.dx = -this.dx; this.dy = -this.dy; } }
+            break;
+          case 15: if (S.length < 2) ok = false; else { const t = S[S.length-1]; S[S.length-1] = S[S.length-2]; S[S.length-2] = t; } break;
+          case 16: if (S.length < 2) ok = false; else { const a = S.pop(); S[S.length-1] -= a; } break;
+          case 17: if (!S.length) ok = false; else { const n = this.cur === 21 ? S[0] : S[S.length-1]; if (j !== 27) this.st[j].push(n); } break;
+          case 18: this.done = true; break;
+        }
+        if (this.done) break;
+        if (!ok) { this.dx = -this.dx; this.dy = -this.dy; }
+        this.advance();
+      }
+      if (this.out.length) { sayBytes(this.out); this.out = []; }
+      stepEl.textContent = '걸음: ' + this.steps.toLocaleString();
+      await yieldUI();
+    }
+    if (this.out.length) { sayBytes(this.out); this.out = []; }
+    if (statEl.textContent !== '중지됨') status('프로그램 종료');
+    if (stopEl) stopEl.disabled = true;
+    cmdEl.placeholder = '종료됨'; cmdEl.disabled = true;
+  }
+}
+
+let vm = null;
+if (stopEl) stopEl.addEventListener('click', () => {
+  if (!vm || vm.done) return;
+  vm.done = true;
+  // If it is parked on input, done alone will never be looked at again.
+  if (vm.resolve) { vm.q.push(0); const r = vm.resolve; vm.resolve = null; r(); }
+  status('중지됨');
+});
+
+cmdEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && vm && !vm.done) {
+    const v = cmdEl.value; cmdEl.value = '';
+    say(v + '\n', 'echo');
+    cmdEl.disabled = true; cmdEl.placeholder = '실행 중…';
+    vm.feed(v);
+  }
+});
+
+async function runGrid(g, keepLog) {
+  if (!keepLog) termEl.textContent = '';
+  say(`격자 ${g.rows.toLocaleString()}행 × ${g.W}열\n`, 'echo');
+  status('스킵 테이블 생성 중…'); await yieldUI();
+  const skip = buildSkip(g);
+  say(`스킵 테이블: ${skip.filter(Boolean).length}/${g.W}개 열\n\n`, 'echo');
+  status('실행 중'); await yieldUI();
+  vm = new AheuiVM(g, skip);
+  if (stopEl) stopEl.disabled = false;
+  vm.run();
+}
+
+async function start(bytes, keepLog) {
+  if (!keepLog) termEl.textContent = '';
+  status('PNG 디코딩 중…'); await yieldUI();
+  const raw = await decodePNG(bytes);
+  status('아희 격자 복원 중…'); await yieldUI();
+  return runGrid(buildGrid(raw), true);
+}
+
+function offer(blob, filename, info) {
+  const url = URL.createObjectURL(blob);
+  dlEl.href = url; dlEl.download = filename; dlEl.textContent = filename + ' 내려받기';
+  thumbEl.src = filename.endsWith('.png') ? url : '';
+  madeInfoEl.textContent = info;
+  madeEl.classList.add('on');
+}
+
+// Anything dropped on the page ends up here. Brainfuck is compiled and baked
+// into a PNG, and it is that PNG which is decoded and run -- what plays is
+// what downloads. An Aheui grid using only the 38 symbols the compiler emits
+// can be baked the same way; one using any other syllable cannot be, because
+// the residue-mod-40 format has no room for it, so it runs straight from text
+// and the page says so rather than failing.
+// Above this, baking in the browser means a pixel array and a deflate pass of
+// the same order again; bf_to_png.py does it without the tab.
+const BAKE_LIMIT = 12000000;
+
+async function load(bytes, name) {
+  const isPNG = bytes.length > 8 && bytes[0] === 137 && bytes[1] === 80 &&
+                bytes[2] === 78 && bytes[3] === 71;
+  if (isPNG) {
+    madeEl.classList.remove('on');
+    return start(bytes);
+  }
+
+  termEl.textContent = '';
+  const text = decodeText(bytes);
+  const stem = (name || 'program').replace(/\.[^.]*$/, '');
+  let grid;
+
+  if (/[\uAC00-\uD7A3]/.test(text)) {
+    status('아희 격자 읽는 중…'); await yieldUI();
+    let g;
+    try { g = gridFromText(text); }
+    catch (err) { status('격자 오류'); say(`격자 오류: ${err.message}\n`, 'echo'); return; }
+
+    // Membership is checked against the grid's symbol table, not the text:
+    // there are a few dozen distinct symbols and tens of millions of cells.
+    const outside = [];
+    for (const c of g.syms) {
+      const ch = String.fromCharCode(c);
+      if (ALPHABET.indexOf(ch) < 0) outside.push(ch);
+    }
+    const tooBig = text.length > BAKE_LIMIT;
+
+    if (outside.length || tooBig) {
+      say(`${name}: 아희 격자 ${g.rows.toLocaleString()}행 × ${g.W}열\n`, 'echo');
+      if (outside.length)
+        say(`알파벳 밖의 문자 ${outside.length}종 (${outside.slice(0, 8).join(' ')}) — ` +
+            'PNG의 40진 잔여값으로 저장할 수 없습니다.\n', 'echo');
+      if (tooBig)
+        say(`격자가 ${text.length.toLocaleString()}자로 브라우저에서 굽기에 너무 큽니다 ` +
+            `(한도 ${BAKE_LIMIT.toLocaleString()}자). PNG가 필요하면 bf_to_png.py를 쓰세요.\n`, 'echo');
+      say('텍스트에서 바로 실행합니다.\n\n', 'echo');
+      if (text.length <= 4000000)
+        offer(new Blob([text], {type: 'text/plain'}), stem + '.aheui',
+              `${g.rows.toLocaleString()}행 × ${g.W}열 · PNG로 굽지 않음`);
+      else
+        madeEl.classList.remove('on');
+      return runGrid(g, true);
+    }
+    say(`${name}: 아희 격자로 읽습니다\n`, 'echo');
+    grid = text.endsWith('\n') ? text : text + '\n';
+  } else {
+    const ops = (text.match(/[+\-.,<>[\]]/g) || []).length;
+    if (!ops) { status('브레인퍽 명령이 없습니다'); say(`${name}: 실행할 명령이 없습니다\n`, 'echo'); return; }
+    say(`${name}: 브레인퍽 명령 ${ops.toLocaleString()}개\n`, 'echo');
+    status('브레인퍽 → 아희 컴파일 중…'); await yieldUI();
+    let rows;
+    try { rows = compileBF(text); }
+    catch (err) { status('컴파일 실패'); say(`컴파일 실패: ${err.message}\n`, 'echo'); return; }
+    say(`아희 격자 ${rows.length.toLocaleString()}행 생성\n`, 'echo');
+    grid = rows.join('\n') + '\n';
+  }
+
+  status('PNG 굽는 중…'); await yieldUI();
+  let out;
+  try { out = await encodePNG(gridToBytes(grid), 1067); }
+  catch (err) { status('인코딩 실패'); say(`인코딩 실패: ${err.message}\n`, 'echo'); return; }
+
+  offer(new Blob([out.png], {type: 'image/png'}), stem + '.png',
+        `${out.W}×${out.H} px · ${out.png.length.toLocaleString()} 바이트`);
+  say(`PNG ${out.W}×${out.H} 굽기 완료 — 아래 링크로 내려받을 수 있습니다\n\n`, 'echo');
+  await yieldUI();
+  return start(out.png, true);
+}
+
+document.getElementById('file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (f) load(new Uint8Array(await f.arrayBuffer()), f.name);
+});
+['dragover','dragleave','drop'].forEach(ev =>
+  dropEl.addEventListener(ev, e => {
+    e.preventDefault();
+    dropEl.classList.toggle('on', ev === 'dragover');
+    const f = ev === 'drop' && e.dataTransfer.files[0];
+    if (f) f.arrayBuffer().then(b => load(new Uint8Array(b), f.name));
+  }));
+
+// If served over http(s), load something automatically: ?png=NAME for an
+// already-baked grid, ?bf=NAME to compile a source file on arrival.
+if (location.protocol.startsWith('http')) {
+  const q = new URLSearchParams(location.search || '');
+  const src = q.get('bf') || q.get('png') || 'lost_kingdom_pure_aheui.png';
+  fetch(src)
+    .then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+    .then(b => load(new Uint8Array(b), src.split('/').pop()))
+    .catch(() => status('파일을 선택하세요'));
+} else {
+  status('파일을 선택하세요');
+}
+</script>
+</body>
+</html>
